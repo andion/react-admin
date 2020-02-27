@@ -5,7 +5,6 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import { makeStyles } from '@material-ui/core/styles';
 import ContentSave from '@material-ui/icons/Save';
 import classnames from 'classnames';
-import { useFormState } from 'react-final-form';
 import {
     useTranslate,
     useNotify,
@@ -26,20 +25,18 @@ const SaveButton: FC<SaveButtonProps> = ({
     icon = defaultIcon,
     onClick,
     handleSubmitWithRedirect,
-    selfSubmit,
+    customSave,
+    setSave,
     ...rest
 }) => {
     const classes = useStyles({ classes: classesOverride });
-    const formState = useFormState();
     const notify = useNotify();
     const translate = useTranslate();
 
-    // We handle the click event through mousedown because of an issue when
-    // the button is not as the same place when mouseup occurs, preventing the click
-    // event to fire.
-    // It can happen when some errors appear under inputs, pushing the button
-    // towards the window bottom.
-    const handleMouseDown = event => {
+    const handleClick = event => {
+        if (typeof setSave === 'function') {
+            setSave(customSave);
+        }
         if (saving) {
             // prevent double submission
             event.preventDefault();
@@ -52,10 +49,6 @@ const SaveButton: FC<SaveButtonProps> = ({
                 event.preventDefault();
             }
             handleSubmitWithRedirect(redirect);
-        }
-
-        if (typeof selfSubmit === 'function') {
-            selfSubmit(formState.values, redirect);
         }
 
         if (typeof onClick === 'function') {
@@ -130,7 +123,10 @@ interface Props {
     classes?: object;
     className?: string;
     handleSubmitWithRedirect?: (redirect?: RedirectionSideEffect) => void;
-    selfSubmit?: (values: object, redirect: RedirectionSideEffect) => void;
+    customSave?: (values: object, redirect: RedirectionSideEffect) => void;
+    setSave?: (
+        save: (values: object, redirect: RedirectionSideEffect) => void
+    ) => void;
     icon?: ReactElement;
     invalid?: boolean;
     label?: string;
@@ -154,7 +150,8 @@ SaveButton.propTypes = {
     className: PropTypes.string,
     classes: PropTypes.object,
     handleSubmitWithRedirect: PropTypes.func,
-    selfSubmit: PropTypes.func,
+    customSave: PropTypes.func,
+    setSave: PropTypes.func,
     invalid: PropTypes.bool,
     label: PropTypes.string,
     pristine: PropTypes.bool,
